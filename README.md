@@ -1,32 +1,32 @@
-Image Gallery 
-Objective:
 
-- To create a simple image gallery using Google Drive as a cloud storage solution
-- To embed the Google Drive folder in an HTML page using an iframe
 
-Process:
+Image Gallery
 
-1. Shared Google Drive folder link
-2. Used iframe to embed the folder in an HTML page
-3. Created a simple image gallery with a responsive design
+Overview
+A responsive image gallery showcasing a collection of images with interactive features 📸
 
-Skills:
+Features
+- 🌟 *Image showcase*: Display a collection of images in a responsive gallery layout.
+- 🔍 *Lightbox view*: View images in a lightbox with zoom and navigation controls.
+- 📱 *Responsive design*: Gallery adapts to different screen sizes and devices.
 
-- Cloud computing (Google Drive)
-- HTML/CSS (iframe, styling)
-- Web development (embedding external content)
+Technologies Used
+- 💻 *HTML5*: Structuring and presenting content.
+- 🎨 *CSS3*: Styling and layout.
+- ⚡️ *JavaScript*: Interactive elements and lightbox functionality.
 
-Tools:
+Getting Started
+- 🌐 *Explore the gallery*: Check out the live gallery at `https://Reaishma.github.io/Image-gallery-`
+- 📁 *Explore locally*:
+    1. Download the repository: Click the green "Code" button, then select "Download ZIP".
+    2. Open `index.html` in a web browser.
 
-- Google Drive (cloud storage)
-- HTML/CSS ( coding)
-- Text editor/IDE ( coding environment)
-- Web browser (testing)
+Contributing
+Contributions welcome! 🌟 Fork the repository and submit a pull request.
 
-Outcomes:
+Author
+- *Reaishma N*
 
-- A functional image gallery that displays images from a Google Drive folder
-- A simple and responsive design that adapts to different screen sizes
-- Experience with using Google Drive as a cloud storage solution for web development projects
+License
+MIT License 📄
 
-This project demonstrates the use of cloud computing and web development skills to create a simple image gallery.
