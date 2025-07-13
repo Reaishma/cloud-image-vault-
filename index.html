@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CloudVault - Advanced Image Gallery</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --google-blue: #4285f4;
+            --aws-orange: #ff9900;
+            --cloud-success: #34d399;
+            --cloud-warning: #fbbf24;
+            --cloud-error: #ef4444;
+        }
+        
+        .bg-google-blue { background-color: var(--google-blue); }
+        .bg-aws-orange { background-color: var(--aws-orange); }
+        .text-google-blue { color: var(--google-blue); }
+        .text-aws-orange { color: var(--aws-orange); }
+        .text-cloud-success { color: var(--cloud-success); }
+        .text-cloud-warning { color: var(--cloud-warning); }
+        .text-cloud-error { color: var(--cloud-error); }
+        
+        .hover\:bg-blue-700:hover { background-color: #1d4ed8; }
+        .hover\:bg-orange-600:hover { background-color: #ea580c; }
+        .hover\:bg-red-600:hover { background-color: #dc2626; }
+        
+        /* Animation for drag and drop */
+        .drag-over {
+            border-color: var(--google-blue);
+            background-color: rgba(66, 133, 244, 0.1);
+        }
+        
+        /* Modal backdrop */
+        .modal-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        
+        /* Notification panel */
+        .notification-panel {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            width: 320px;
+            max-height: 400px;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            z-index: 50;
+            display: none;
+        }
+        
+        .notification-panel.show {
+            display: block;
+        }
+        
+        /* Grid layout for images */
+        .image-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+        
+        /* Image hover effects */
+        .image-item {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .image-item:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+        
+        /* Loading spinner */
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #f3f4f6;
+            border-radius: 50%;
+            border-top-color: var(--google-blue);
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .image-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+            
+            .notification-panel {
+                width: 280px;
+                right: -40px;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-cloud text-google-blue text-2xl"></i>
+                        <h1 class="text-xl font-bold text-gray-900">CloudVault</h1>
+                    </div>
+                    <div class="hidden md:flex items-center space-x-2">
+                        <span class="text-sm text-gray-500">Provider:</span>
+                        <div class="flex items-center space-x-2">
+                            <button id="googleBtn" class="provider-btn bg-google-blue text-white px-3 py-1 rounded text-sm hover:bg-blue-700">
+                                <i class="fab fa-google mr-1"></i>
+                                Google Cloud
+                            </button>
+                            <button id="awsBtn" class="provider-btn border border-gray-300 text-gray-700 px-3 py-1 rounded text-sm hover:bg-gray-50">
+                                <i class="fab fa-aws mr-1"></i>
+                                AWS S3
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="relative">
+                        <button id="notificationBtn" class="relative p-2 text-gray-500 hover:text-gray-700">
+                            <i class="fas fa-bell text-lg"></i>
+                            <span id="notificationBadge" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">2</span>
+                        </button>
+                        <div id="notificationPanel" class="notification-panel">
+                            <div class="p-4 border-b border-gray-200">
+                                <div class="flex items-center justify-between">
+                                    <h3 class="font-semibold text-gray-900">Notifications</h3>
+                                    <button id="markAllReadBtn" class="text-xs text-gray-500 hover:text-gray-700">
+                                        Mark all as read
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="notificationsList" class="max-h-96 overflow-y-auto">
+                                <!-- Notifications will be populated here -->
+                            </div>
+                            <div class="p-4 border-t border-gray-200">
+                                <button class="w-full text-sm text-gray-500 hover:text-gray-700">
+                                    View all notifications
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="w-8 h-8 bg-blue-500 rounded-full"></div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Analytics Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Total Storage</p>
+                        <p class="text-2xl font-bold text-gray-900" id="totalStorage">2.4 TB</p>
+                    </div>
+                    <i class="fas fa-database text-google-blue text-2xl"></i>
+                </div>
+                <div class="mt-4">
+                    <div class="flex items-center text-sm text-cloud-success">
+                        <i class="fas fa-arrow-up mr-1"></i>
+                        <span>12% from last month</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Total Images</p>
+                        <p class="text-2xl font-bold text-gray-900" id="totalImages">0</p>
+                    </div>
+                    <i class="fas fa-images text-aws-orange text-2xl"></i>
+                </div>
+                <div class="mt-4">
+                    <div class="flex items-center text-sm text-cloud-success">
+                        <i class="fas fa-arrow-up mr-1"></i>
+                        <span>8% from last month</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">CDN Bandwidth</p>
+                        <p class="text-2xl font-bold text-gray-900">847 GB</p>
+                    </div>
+                    <i class="fas fa-network-wired text-google-blue text-2xl"></i>
+                </div>
+                <div class="mt-4">
+                    <div class="flex items-center text-sm text-cloud-warning">
+                        <i class="fas fa-arrow-down mr-1"></i>
+                        <span>3% from last month</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Monthly Cost</p>
+                        <p class="text-2xl font-bold text-gray-900">$124.67</p>
+                    </div>
+                    <i class="fas fa-dollar-sign text-cloud-success text-2xl"></i>
+                </div>
+                <div class="mt-4">
+                    <div class="flex items-center text-sm text-cloud-success">
+                        <i class="fas fa-arrow-up mr-1"></i>
+                        <span>5% from last month</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gallery Controls -->
+        <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-8">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
+                <div class="flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 sm:space-x-4">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-sm text-gray-500">Selected:</span>
+                        <span id="selectedCount" class="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded">0</span>
+                        <button id="selectAllBtn" class="text-google-blue hover:text-blue-700 text-sm">
+                            Select All
+                        </button>
+                    </div>
+                    
+                    <button id="refreshBtn" class="flex items-center space-x-2 border border-gray-300 px-3 py-1 rounded text-sm hover:bg-gray-50">
+                        <i class="fas fa-sync"></i>
+                        <span>Refresh</span>
+                    </button>
+                </div>
+                
+                <div class="flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 sm:space-x-4">
+                    <div class="relative">
+                        <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                        <input id="searchInput" type="text" placeholder="Search images..." class="w-full sm:w-64 pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-google-blue focus:border-transparent">
+                    </div>
+                    
+                    <select id="sortSelect" class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-google-blue focus:border-transparent">
+                        <option value="date">Sort by Date</option>
+                        <option value="name">Sort by Name</option>
+                        <option value="size">Sort by Size</option>
+                        <option value="type">Sort by Type</option>
+                    </select>
+                    
+                    <div class="flex items-center space-x-2">
+                        <button id="gridViewBtn" class="view-btn bg-google-blue text-white p-2 rounded hover:bg-blue-700">
+                            <i class="fas fa-th"></i>
+                        </button>
+                        <button id="listViewBtn" class="view-btn border border-gray-300 text-gray-700 p-2 rounded hover:bg-gray-50">
+                            <i class="fas fa-list"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Upload Dropzone -->
+        <div id="uploadDropzone" class="bg-white border-2 border-dashed border-gray-300 rounded-lg p-12 text-center mb-8 hover:border-google-blue transition-colors cursor-pointer">
+            <i class="fas fa-cloud-upload-alt text-6xl text-gray-400 mb-4"></i>
+            <h3 id="uploadText" class="text-lg font-medium text-gray-900 mb-2">
+                Drag and drop your images here
+            </h3>
+            <p class="text-sm text-gray-500 mb-4">
+                or click to browse from your computer
+            </p>
+            <input id="fileInput" type="file" accept="image/*" multiple class="hidden">
+            <button id="uploadBtn" class="bg-google-blue text-white px-6 py-2 rounded-lg hover:bg-blue-700">
+                <i class="fas fa-upload mr-2"></i>
+                Choose Files
+            </button>
+            <p class="text-xs text-gray-400 mt-4">
+                Supports JPG, PNG, GIF up to 10MB each
+            </p>
+        </div>
+
+        <!-- Image Gallery -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-lg font-semibold text-gray-900">Image Gallery</h2>
+                <div class="flex items-center space-x-2">
+                    <span class="text-sm text-gray-500">
+                        Selected: <span id="selectedCountDisplay">0</span>
+                    </span>
+                </div>
+            </div>
+
+            <div id="imageGallery" class="image-grid">
+                <!-- Images will be populated here -->
+            </div>
+
+            <div id="emptyState" class="text-center py-12">
+                <i class="fas fa-folder-open text-6xl text-gray-400 mb-4"></i>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">No images found</h3>
+                <p class="text-sm text-gray-500">Upload some images to get started</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Preview Modal -->
+    <div id="imageModal" class="modal-backdrop" style="display: none;">
+        <div class="bg-white rounded-lg shadow-xl max-w-6xl w-full mx-4 max-h-[90vh] overflow-hidden">
+            <div class="flex items-center justify-between p-6 border-b border-gray-200">
+                <h3 id="modalTitle" class="text-lg font-semibold text-gray-900"></h3>
+                <button id="closeModal" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <div class="flex">
+                <div class="flex-1 p-6">
+                    <div class="flex items-center justify-center bg-gray-100 rounded-lg p-4 min-h-[400px]">
+                        <img id="modalImage" class="max-w-full max-h-full object-contain rounded-lg shadow-lg transition-transform">
+                    </div>
+                    
+                    <div class="flex items-center justify-center space-x-4 mt-4">
+                        <button id="zoomOutBtn" class="flex items-center space-x-2 border border-gray-300 px-3 py-1 rounded text-sm hover:bg-gray-50">
+                            <i class="fas fa-search-minus"></i>
+                            <span>Zoom Out</span>
+                        </button>
+                        <span id="zoomLevel" class="text-sm text-gray-500">100%</span>
+                        <button id="zoomInBtn" class="flex items-center space-x-2 border border-gray-300 px-3 py-1 rounded text-sm hover:bg-gray-50">
+                            <i class="fas fa-search-plus"></i>
+                            <span>Zoom In</span>
+                        </button>
+                        <button id="downloadBtn" class="flex items-center space-x-2 border border-gray-300 px-3 py-1 rounded text-sm hover:bg-gray-50">
+                            <i class="fas fa-download"></i>
+                            <span>Download</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="w-80 bg-gray-50 p-6 border-l border-gray-200 overflow-auto">
+                    <h4 class="font-semibold text-gray-900 mb-4">Image Details</h4>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Filename</label>
+                            <p id="modalFilename" class="text-sm text-gray-900"></p>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">File Size</label>
+                            <p id="modalFileSize" class="text-sm text-gray-900"></p>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Dimensions</label>
+                            <p id="modalDimensions" class="text-sm text-gray-900"></p>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Upload Date</label>
+                            <p id="modalUploadDate" class="text-sm text-gray-900"></p>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Storage Provider</label>
+                            <div class="flex items-center space-x-2">
+                                <i id="modalProviderIcon" class="fas fa-cloud text-google-blue"></i>
+                                <span id="modalProvider" class="text-sm text-gray-900"></span>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">CDN URL</label>
+                            <div class="flex items-center space-x-2">
+                                <p id="modalCdnUrl" class="text-sm text-gray-900 flex-1 truncate overflow-hidden"></p>
+                                <button onclick="copyToClipboard()" class="text-xs text-gray-500 hover:text-gray-700 p-1 rounded" title="Copy URL">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">MIME Type</label>
+                            <span id="modalMimeType" class="inline-block bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded"></span>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-6 space-y-2">
+                        <button id="switchProviderBtn" class="w-full bg-aws-orange text-white py-2 rounded hover:bg-orange-600">
+                            <i class="fab fa-aws mr-2"></i>
+                            Move to AWS S3
+                        </button>
+                        
+                        <button id="deleteImageBtn" class="w-full bg-red-500 text-white py-2 rounded hover:bg-red-600">
+                            <i class="fas fa-trash mr-2"></i>
+                            Delete Image
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toastContainer" class="fixed top-4 right-4 z-50 space-y-2">
+        <!-- Toast messages will be shown here -->
+    </div>
+
+    <script>
+        // Application State
+        let currentProvider = 'google';
+        let viewMode = 'grid';
+        let images = [];
+        let selectedImages = [];
+        let currentZoom = 1;
+        let currentImageIndex = 0;
+        let notifications = [
+            {
+                id: 1,
+                title: "Image uploaded successfully",
+                message: "Your image has been uploaded to Google Cloud Storage",
+                time: "2 minutes ago",
+                read: false
+            },
+            {
+                id: 2,
+                title: "Storage limit warning",
+                message: "You're approaching your storage limit (85% used)",
+                time: "1 hour ago",
+                read: false
+            },
+            {
+                id: 3,
+                title: "Backup completed",
+                message: "Weekly backup completed successfully",
+                time: "2 hours ago",
+                read: true
+            }
+        ];
+
+        // Utility Functions
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+        }
+
+        function formatDate(date) {
+            return new Date(date).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function showToast(title, message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `p-4 rounded-lg shadow-lg max-w-sm ${
+                type === 'error' ? 'bg-red-500' : 'bg-green-500'
+            } text-white`;
+            toast.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas fa-${type === 'error' ? 'exclamation-circle' : 'check-circle'} mr-2"></i>
+                    <div>
+                        <p class="font-medium">${title}</p>
+                        <p class="text-sm opacity-90">${message}</p>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('toastContainer').appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+
+        // Provider Management
+        function switchProvider(provider) {
+            currentProvider = provider;
+            
+            // Update button states
+            document.getElementById('googleBtn').className = provider === 'google' 
+                ? 'provider-btn bg-google-blue text-white px-3 py-1 rounded text-sm hover:bg-blue-700'
+                : 'provider-btn border border-gray-300 text-gray-700 px-3 py-1 rounded text-sm hover:bg-gray-50';
+            
+            document.getElementById('awsBtn').className = provider === 'aws' 
+                ? 'provider-btn bg-aws-orange text-white px-3 py-1 rounded text-sm hover:bg-orange-600'
+                : 'provider-btn border border-gray-300 text-gray-700 px-3 py-1 rounded text-sm hover:bg-gray-50';
+        }
+
+        // Notification Management
+        function updateNotifications() {
+            const unreadCount = notifications.filter(n => !n.read).length;
+            const badge = document.getElementById('notificationBadge');
+            
+            if (unreadCount > 0) {
+                badge.textContent = unreadCount;
+                badge.style.display = 'flex';
+            } else {
+                badge.style.display = 'none';
+            }
+            
+            const notificationsList = document.getElementById('notificationsList');
+            notificationsList.innerHTML = notifications.map(notification => `
+                <div class="p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer ${!notification.read ? 'bg-blue-50' : ''}">
+                    <div class="flex items-start space-x-3">
+                        <div class="w-2 h-2 rounded-full mt-2 ${!notification.read ? 'bg-blue-500' : 'bg-transparent'}"></div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium text-gray-900">${notification.title}</p>
+                            <p class="text-sm text-gray-500 mt-1">${notification.message}</p>
+                            <p class="text-xs text-gray-400 mt-1">${notification.time}</p>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function markAllNotificationsAsRead() {
+            notifications.forEach(n => n.read = true);
+            updateNotifications();
+        }
+
+        // Image Management
+        function addImages(newImages) {
+            newImages.forEach(image => {
+                images.push({
+                    id: Date.now() + Math.random(),
+                    filename: image.name,
+                    originalName: image.name,
+                    size: image.size,
+                    mimeType: image.type,
+                    dimensions: '1920x1080',
+                    uploadDate: new Date(),
+                    provider: currentProvider,
+                    dataUrl: image.dataUrl,
+                    metadata: JSON.stringify({
+                        uploadedAt: new Date().toISOString(),
+                        provider: currentProvider
+                    })
+                });
+            });
+            
+            updateImageDisplay();
+            updateAnalytics();
+            
+            // Add upload notification
+            notifications.unshift({
+                id: Date.now(),
+                title: "Images uploaded successfully",
+                message: `${newImages.length} image(s) uploaded to ${currentProvider === 'google' ? 'Google Cloud Storage' : 'AWS S3'}`,
+                time: "Just now",
+                read: false
+            });
+            updateNotifications();
+        }
+
+        function updateImageDisplay() {
+            const gallery = document.getElementById('imageGallery');
+            const emptyState = document.getElementById('emptyState');
+            
+            if (images.length === 0) {
+                gallery.style.display = 'none';
+                emptyState.style.display = 'block';
+                return;
+            }
+            
+            gallery.style.display = 'grid';
+            emptyState.style.display = 'none';
+            
+            // Filter and sort images
+            let filteredImages = images.filter(image => {
+                const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+                return image.filename.toLowerCase().includes(searchTerm) ||
+                       image.originalName.toLowerCase().includes(searchTerm);
+            });
+            
+            const sortBy = document.getElementById('sortSelect').value;
+            filteredImages.sort((a, b) => {
+                switch (sortBy) {
+                    case 'name':
+                        return a.filename.localeCompare(b.filename);
+                    case 'size':
+                        return a.size - b.size;
+                    case 'type':
+                        return a.mimeType.localeCompare(b.mimeType);
+                    default:
+                        return new Date(b.uploadDate) - new Date(a.uploadDate);
+                }
+            });
+            
+            gallery.innerHTML = filteredImages.map(image => `
+                <div class="image-item relative bg-gray-100 rounded-lg overflow-hidden aspect-square cursor-pointer group" 
+                     onclick="openImageModal('${image.id}')">
+                    <img src="${image.dataUrl}" alt="${image.originalName}" 
+                         class="w-full h-full object-cover group-hover:scale-105 transition-transform">
+                    <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-opacity"></div>
+                    <div class="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <input type="checkbox" class="image-checkbox" data-id="${image.id}" 
+                               ${selectedImages.includes(image.id) ? 'checked' : ''} 
+                               onclick="event.stopPropagation(); toggleImageSelection('${image.id}')">
+                    </div>
+                    <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <p class="text-white text-xs font-medium truncate">${image.filename}</p>
+                        <p class="text-white text-xs opacity-75">${formatFileSize(image.size)}</p>
+                    </div>
+                    <div class="absolute top-2 right-2">
+                        <span class="inline-block bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded">
+                            ${image.provider === 'google' ? 'GCP' : 'AWS'}
+                        </span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function toggleImageSelection(imageId) {
+            const index = selectedImages.indexOf(imageId);
+            if (index > -1) {
+                selectedImages.splice(index, 1);
+            } else {
+                selectedImages.push(imageId);
+            }
+            updateSelectionDisplay();
+        }
+
+        function updateSelectionDisplay() {
+            document.getElementById('selectedCount').textContent = selectedImages.length;
+            document.getElementById('selectedCountDisplay').textContent = selectedImages.length;
+            
+            const selectAllBtn = document.getElementById('selectAllBtn');
+            selectAllBtn.textContent = selectedImages.length === images.length ? 'Deselect All' : 'Select All';
+        }
+
+        function selectAllImages() {
+            if (selectedImages.length === images.length) {
+                selectedImages = [];
+            } else {
+                selectedImages = images.map(img => img.id);
+            }
+            updateSelectionDisplay();
+            updateImageDisplay();
+        }
+
+        function updateAnalytics() {
+            document.getElementById('totalImages').textContent = images.length.toLocaleString();
+        }
+
+        // Modal Management
+        function openImageModal(imageId) {
+            const image = images.find(img => img.id == imageId);
+            if (!image) return;
+            
+            currentImageIndex = images.indexOf(image);
+            currentZoom = 1;
+            
+            document.getElementById('modalTitle').textContent = image.filename;
+            document.getElementById('modalImage').src = image.dataUrl;
+            document.getElementById('modalImage').style.transform = 'scale(1)';
+            document.getElementById('modalFilename').textContent = image.filename;
+            document.getElementById('modalFileSize').textContent = formatFileSize(image.size);
+            document.getElementById('modalDimensions').textContent = image.dimensions;
+            document.getElementById('modalUploadDate').textContent = formatDate(image.uploadDate);
+            document.getElementById('modalProvider').textContent = image.provider === 'google' ? 'Google Cloud Storage' : 'AWS S3';
+            document.getElementById('modalMimeType').textContent = image.mimeType;
+            document.getElementById('zoomLevel').textContent = '100%';
+            
+            // Format CDN URL display
+            const cdnUrlElement = document.getElementById('modalCdnUrl');
+            if (image.dataUrl.startsWith('data:')) {
+                cdnUrlElement.textContent = `data:${image.mimeType};base64,... (${Math.round(image.dataUrl.length / 1024)}KB)`;
+            } else {
+                cdnUrlElement.textContent = image.dataUrl;
+            }
+            
+            const providerIcon = document.getElementById('modalProviderIcon');
+            const switchBtn = document.getElementById('switchProviderBtn');
+            
+            if (image.provider === 'google') {
+                providerIcon.className = 'fab fa-google text-google-blue';
+                switchBtn.innerHTML = '<i class="fab fa-aws mr-2"></i>Move to AWS S3';
+                switchBtn.className = 'w-full bg-aws-orange text-white py-2 rounded hover:bg-orange-600';
+            } else {
+                providerIcon.className = 'fab fa-aws text-aws-orange';
+                switchBtn.innerHTML = '<i class="fab fa-google mr-2"></i>Move to Google Cloud';
+                switchBtn.className = 'w-full bg-google-blue text-white py-2 rounded hover:bg-blue-700';
+            }
+            
+            document.getElementById('imageModal').style.display = 'flex';
+        }
+
+        function closeImageModal() {
+            document.getElementById('imageModal').style.display = 'none';
+        }
+
+        function zoomImage(direction) {
+            if (direction === 'in') {
+                currentZoom = Math.min(3, currentZoom + 0.25);
+            } else {
+                currentZoom = Math.max(0.25, currentZoom - 0.25);
+            }
+            
+            document.getElementById('modalImage').style.transform = `scale(${currentZoom})`;
+            document.getElementById('zoomLevel').textContent = Math.round(currentZoom * 100) + '%';
+        }
+
+        function downloadImage() {
+            const image = images[currentImageIndex];
+            const link = document.createElement('a');
+            link.href = image.dataUrl;
+            link.download = image.filename;
+            link.click();
+            
+            showToast('Download started', `Downloading ${image.filename}`);
+        }
+
+        function switchImageProvider() {
+            const image = images[currentImageIndex];
+            const newProvider = image.provider === 'google' ? 'aws' : 'google';
+            
+            image.provider = newProvider;
+            updateImageDisplay();
+            closeImageModal();
+            
+            showToast('Image moved', `${image.filename} moved to ${newProvider === 'google' ? 'Google Cloud Storage' : 'AWS S3'}`);
+        }
+
+        function deleteImage() {
+            const image = images[currentImageIndex];
+            images.splice(currentImageIndex, 1);
+            
+            // Remove from selected images
+            const selectedIndex = selectedImages.indexOf(image.id);
+            if (selectedIndex > -1) {
+                selectedImages.splice(selectedIndex, 1);
+            }
+            
+            updateImageDisplay();
+            updateSelectionDisplay();
+            updateAnalytics();
+            closeImageModal();
+            
+            showToast('Image deleted', `${image.filename} has been deleted`);
+        }
+
+        function copyToClipboard() {
+            const image = images[currentImageIndex];
+            navigator.clipboard.writeText(image.dataUrl).then(() => {
+                showToast('Copied to clipboard', 'CDN URL copied to clipboard');
+            }).catch(() => {
+                showToast('Copy failed', 'Failed to copy URL to clipboard', 'error');
+            });
+        }
+
+        // File Upload Handling
+        function handleFileUpload(files) {
+            const imageFiles = Array.from(files).filter(file => file.type.startsWith('image/'));
+            
+            if (imageFiles.length === 0) {
+                showToast('Invalid files', 'Please select only image files (JPG, PNG, GIF)', 'error');
+                return;
+            }
+            
+            document.getElementById('uploadText').innerHTML = '<i class="loading-spinner mr-2"></i>Uploading...';
+            document.getElementById('uploadBtn').disabled = true;
+            
+            Promise.all(imageFiles.map(file => {
+                return new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        resolve({
+                            name: file.name,
+                            size: file.size,
+                            type: file.type,
+                            dataUrl: e.target.result
+                        });
+                    };
+                    reader.readAsDataURL(file);
+                });
+            })).then(processedFiles => {
+                addImages(processedFiles);
+                
+                document.getElementById('uploadText').textContent = 'Drag and drop your images here';
+                document.getElementById('uploadBtn').disabled = false;
+                document.getElementById('fileInput').value = '';
+                
+                showToast('Upload successful', `${imageFiles.length} image(s) uploaded to ${currentProvider === 'google' ? 'Google Cloud Storage' : 'AWS S3'}`);
+            });
+        }
+
+        // Event Listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            // Provider buttons
+            document.getElementById('googleBtn').addEventListener('click', () => switchProvider('google'));
+            document.getElementById('awsBtn').addEventListener('click', () => switchProvider('aws'));
+            
+            // Notification panel
+            document.getElementById('notificationBtn').addEventListener('click', function() {
+                const panel = document.getElementById('notificationPanel');
+                panel.classList.toggle('show');
+            });
+            
+            document.getElementById('markAllReadBtn').addEventListener('click', markAllNotificationsAsRead);
+            
+            // Close notification panel when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('#notificationBtn') && !e.target.closest('#notificationPanel')) {
+                    document.getElementById('notificationPanel').classList.remove('show');
+                }
+            });
+            
+            // Gallery controls
+            document.getElementById('searchInput').addEventListener('input', updateImageDisplay);
+            document.getElementById('sortSelect').addEventListener('change', updateImageDisplay);
+            document.getElementById('selectAllBtn').addEventListener('click', selectAllImages);
+            document.getElementById('refreshBtn').addEventListener('click', updateImageDisplay);
+            
+            // View mode buttons
+            document.getElementById('gridViewBtn').addEventListener('click', function() {
+                viewMode = 'grid';
+                this.className = 'view-btn bg-google-blue text-white p-2 rounded hover:bg-blue-700';
+                document.getElementById('listViewBtn').className = 'view-btn border border-gray-300 text-gray-700 p-2 rounded hover:bg-gray-50';
+            });
+            
+            document.getElementById('listViewBtn').addEventListener('click', function() {
+                viewMode = 'list';
+                this.className = 'view-btn bg-google-blue text-white p-2 rounded hover:bg-blue-700';
+                document.getElementById('gridViewBtn').className = 'view-btn border border-gray-300 text-gray-700 p-2 rounded hover:bg-gray-50';
+            });
+            
+            // File upload
+            const dropzone = document.getElementById('uploadDropzone');
+            const fileInput = document.getElementById('fileInput');
+            
+            dropzone.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                this.classList.add('drag-over');
+            });
+            
+            dropzone.addEventListener('dragleave', function(e) {
+                e.preventDefault();
+                this.classList.remove('drag-over');
+            });
+            
+            dropzone.addEventListener('drop', function(e) {
+                e.preventDefault();
+                this.classList.remove('drag-over');
+                handleFileUpload(e.dataTransfer.files);
+            });
+            
+            dropzone.addEventListener('click', () => fileInput.click());
+            document.getElementById('uploadBtn').addEventListener('click', () => fileInput.click());
+            fileInput.addEventListener('change', (e) => handleFileUpload(e.target.files));
+            
+            // Modal controls
+            document.getElementById('closeModal').addEventListener('click', closeImageModal);
+            document.getElementById('zoomInBtn').addEventListener('click', () => zoomImage('in'));
+            document.getElementById('zoomOutBtn').addEventListener('click', () => zoomImage('out'));
+            document.getElementById('downloadBtn').addEventListener('click', downloadImage);
+            document.getElementById('switchProviderBtn').addEventListener('click', switchImageProvider);
+            document.getElementById('deleteImageBtn').addEventListener('click', deleteImage);
+            
+            // Close modal when clicking backdrop
+            document.getElementById('imageModal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeImageModal();
+                }
+            });
+            
+            // Keyboard shortcuts
+            document.addEventListener('keydown', function(e) {
+                if (document.getElementById('imageModal').style.display === 'flex') {
+                    if (e.key === 'Escape') closeImageModal();
+                    if (e.key === '+' || e.key === '=') zoomImage('in');
+                    if (e.key === '-') zoomImage('out');
+                }
+            });
+            
+            // Initialize
+            updateNotifications();
+            updateImageDisplay();
+            updateAnalytics();
+        });
+        
+        // Console log for debugging
+        console.log('CloudVault Image Gallery initialized');
+    </script>
+</body>
+</html>
