@@ -279,7 +279,7 @@ docker run -p 5000:5000 cloudvault
 
 ## 🚀 Live Demo 
    
- [view demo](.    )
+ [view demo](https://reaishma.github.io/cloud-image-vault-/)
 
 ## 🧪 Testing
 
