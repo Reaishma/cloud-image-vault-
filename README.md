@@ -257,7 +257,7 @@ npm start
 ```bash
 docker build -t cloudvault .
 docker run -p 5000:5000 cloudvault
-
+```
 ### Development Environment
 - **Dev Server**: Vite development server with Express.js API
 - **Hot Reload**: Full-stack hot module replacement
@@ -308,7 +308,7 @@ npm run db:migrate
 ### Reset Database
 ```bash
 npm run db:reset
-
+```
 ## 📈 Performance Optimizations
 
 - **Image Optimization** - Automatic image compression
