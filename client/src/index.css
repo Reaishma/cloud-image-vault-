@@ -1,1 +1,143 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: hsl(0, 0%, 100%);
+  --foreground: hsl(20, 14.3%, 4.1%);
+  --muted: hsl(60, 4.8%, 95.9%);
+  --muted-foreground: hsl(25, 5.3%, 44.7%);
+  --popover: hsl(0, 0%, 100%);
+  --popover-foreground: hsl(20, 14.3%, 4.1%);
+  --card: hsl(0, 0%, 100%);
+  --card-foreground: hsl(20, 14.3%, 4.1%);
+  --border: hsl(20, 5.9%, 90%);
+  --input: hsl(20, 5.9%, 90%);
+  --primary: hsl(207, 90%, 54%);
+  --primary-foreground: hsl(211, 100%, 99%);
+  --secondary: hsl(60, 4.8%, 95.9%);
+  --secondary-foreground: hsl(24, 9.8%, 10%);
+  --accent: hsl(60, 4.8%, 95.9%);
+  --accent-foreground: hsl(24, 9.8%, 10%);
+  --destructive: hsl(0, 84.2%, 60.2%);
+  --destructive-foreground: hsl(60, 9.1%, 97.8%);
+  --ring: hsl(20, 14.3%, 4.1%);
+  --radius: 0.5rem;
+  
+  /* Custom cloud-native colors */
+  --aws-orange: hsl(39, 100%, 50%);
+  --google-blue: hsl(207, 90%, 54%);
+  --cloud-dark: hsl(200, 18%, 26%);
+  --cloud-success: hsl(120, 39%, 54%);
+  --cloud-error: hsl(4, 90%, 58%);
+  --cloud-warning: hsl(36, 100%, 50%);
+  --cloud-info: hsl(207, 90%, 54%);
+}
+
+.dark {
+  --background: hsl(240, 10%, 3.9%);
+  --foreground: hsl(0, 0%, 98%);
+  --muted: hsl(240, 3.7%, 15.9%);
+  --muted-foreground: hsl(240, 5%, 64.9%);
+  --popover: hsl(240, 10%, 3.9%);
+  --popover-foreground: hsl(0, 0%, 98%);
+  --card: hsl(240, 10%, 3.9%);
+  --card-foreground: hsl(0, 0%, 98%);
+  --border: hsl(240, 3.7%, 15.9%);
+  --input: hsl(240, 3.7%, 15.9%);
+  --primary: hsl(207, 90%, 54%);
+  --primary-foreground: hsl(211, 100%, 99%);
+  --secondary: hsl(240, 3.7%, 15.9%);
+  --secondary-foreground: hsl(0, 0%, 98%);
+  --accent: hsl(240, 3.7%, 15.9%);
+  --accent-foreground: hsl(0, 0%, 98%);
+  --destructive: hsl(0, 62.8%, 30.6%);
+  --destructive-foreground: hsl(0, 0%, 98%);
+  --ring: hsl(240, 4.9%, 83.9%);
+  --radius: 0.5rem;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  .text-aws-orange {
+    color: var(--aws-orange);
+  }
+  
+  .text-google-blue {
+    color: var(--google-blue);
+  }
+  
+  .text-cloud-dark {
+    color: var(--cloud-dark);
+  }
+  
+  .text-cloud-success {
+    color: var(--cloud-success);
+  }
+  
+  .text-cloud-error {
+    color: var(--cloud-error);
+  }
+  
+  .text-cloud-warning {
+    color: var(--cloud-warning);
+  }
+  
+  .text-cloud-info {
+    color: var(--cloud-info);
+  }
+  
+  .bg-aws-orange {
+    background-color: var(--aws-orange);
+  }
+  
+  .bg-google-blue {
+    background-color: var(--google-blue);
+  }
+  
+  .bg-cloud-dark {
+    background-color: var(--cloud-dark);
+  }
+  
+  .bg-cloud-success {
+    background-color: var(--cloud-success);
+  }
+  
+  .bg-cloud-error {
+    background-color: var(--cloud-error);
+  }
+  
+  .bg-cloud-warning {
+    background-color: var(--cloud-warning);
+  }
+  
+  .bg-cloud-info {
+    background-color: var(--cloud-info);
+  }
+  
+  .hover\:bg-aws-orange:hover {
+    background-color: var(--aws-orange);
+  }
+  
+  .hover\:bg-google-blue:hover {
+    background-color: var(--google-blue);
+  }
+  
+  .hover\:bg-orange-600:hover {
+    background-color: hsl(25, 95%, 53%);
+  }
+  
+  .hover\:bg-blue-700:hover {
+    background-color: hsl(207, 90%, 44%);
+  }
+}
 
