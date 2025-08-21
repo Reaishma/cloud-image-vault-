@@ -282,9 +282,7 @@ docker run -p 5000:5000 cloudvault
 - **Search and Filtering**: Advanced image search and organization
 - **Accessibility**: WCAG compliant interface with keyboard navigation
 
-## 🚀 Live Demo 
-   
- [view demo](https://reaishma.github.io/cloud-image-vault-/)
+
 
 ## 🧪 Testing
 
