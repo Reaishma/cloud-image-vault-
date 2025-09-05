@@ -2,6 +2,7 @@
 
 CloudVault is a modern, professional cloud storage gallery application that simulates both Google Cloud Storage and AWS S3 providers. Built with React, TypeScript, and Express.js, it provides a comprehensive image management solution with real-time analytics, multi-provider support, and an intuitive user interface.
 
+![Overview](https://github.com/Reaishma/cloud-image-vault-/blob/main/Screenshot_20250904-201302_1.jpg)
 
 # 🚀 Live Demo 
    
