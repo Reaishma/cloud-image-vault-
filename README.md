@@ -226,6 +226,8 @@ cloudvault/
 5. **Gallery Display**: Images retrieved from database and displayed in chosen view mode
 6. **Image Operations**: Preview, download, and deletion operations through API
 
+![Google cloud storage](https://github.com/Reaishma/cloud-image-vault-/blob/main/Screenshot_20250904-201248_1.jpg)
+
 ## External Dependencies
 
 ### Cloud Storage Integration
