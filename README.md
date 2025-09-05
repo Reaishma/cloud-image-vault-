@@ -134,6 +134,8 @@ cloudvault/
 - **Storage Analytics**: Real-time storage usage and cost monitoring
 - **Provider Management**: Toggle between Google Cloud and AWS S3
 
+![AWS S3](https://github.com/Reaishma/cloud-image-vault-/blob/main/Screenshot_20250904-201153_1.jpg)
+
 ## 📊 Database Schema
 
 ### Users Table
